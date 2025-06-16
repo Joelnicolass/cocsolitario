@@ -37,6 +37,9 @@ const IMAGE_RESOURCES = {
   [ResourceType.GOLD]: "/icon_gold.png",
 };
 
+const URL_MANUAL =
+  "https://boardgamegeek.com/file/download_redirect/193df2191107fe2bef32fe74f0fa8e04e56bf430ba6c6ffb/Clash-of-Cultures---Rulebook---WEB---2021-02-26-compressed.pdf";
+
 const GlassCard = ({
   children,
   className = "",
@@ -176,7 +179,7 @@ export default function Home() {
           const event = decreaseTrackEvent();
 
           if (event === ResultTrackEvent.USE_EVENT_CARD) {
-            /*  alert("SE USA EVENTO"); */
+            alert("¡Usa una carta de evento!");
           }
 
           if (tech.effectCategory) {
@@ -188,7 +191,7 @@ export default function Home() {
           }
 
           if (tech.advanceGovernment) {
-            alert(`Gobierno desbloqueado`);
+            alert(`Mejora de Gobierno desbloqueada`);
           }
 
           setTurnText(
@@ -504,6 +507,16 @@ export default function Home() {
           <p className="text-white/40 text-xs">
             Bot de Civilización • Automatizado
           </p>
+        </div>
+        <div className="text-center">
+          <a
+            href={URL_MANUAL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline text-sm"
+          >
+            Manual del Juego
+          </a>
         </div>
       </div>
     </div>
