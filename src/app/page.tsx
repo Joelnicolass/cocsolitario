@@ -49,7 +49,7 @@ const GlassCard = ({
     <div
       className={`
         relative overflow-hidden rounded-2xl
-        bg-white/5 backdrop-blur-xl
+        bg-white/10 backdrop-blur-xl
         border border-white/10
         shadow-2xl shadow-black/10
         ${className}
@@ -170,12 +170,13 @@ export default function Home() {
     switch (action) {
       case IBOActions.ADVANCE: {
         const tech = rollForTechnology(unlockedTechs);
+
         if (tech) {
           unlockTech(tech);
           const event = decreaseTrackEvent();
 
           if (event === ResultTrackEvent.USE_EVENT_CARD) {
-            alert("SE USA EVENTO");
+            /*  alert("SE USA EVENTO"); */
           }
 
           if (tech.effectCategory) {
@@ -184,6 +185,10 @@ export default function Home() {
             } catch (error) {
               console.log("Error adding building to track:", error);
             }
+          }
+
+          if (tech.advanceGovernment) {
+            alert(`Gobierno desbloqueado`);
           }
 
           setTurnText(
@@ -199,7 +204,16 @@ export default function Home() {
                   </span>{" "}
                   - {tech.name}
                 </p>
-                <p className="text-sm text-white/70">{tech.description}</p>
+                {tech.effectCategory && (
+                  <p>
+                    Se agrega{" "}
+                    <span className="font-semibold text-yellow-300 capitalize">
+                      {tech.effectCategory}
+                    </span>{" "}
+                    a edificio por construir
+                  </p>
+                )}
+                {/* <p className="text-sm text-white/70">{tech.description}</p> */}
               </div>
             </div>
           );
@@ -330,7 +344,7 @@ export default function Home() {
         <GlassCard>
           <Button
             onClick={handleNextTurn}
-            className="w-full h-14 bg-gradient-to-r from-transparent via-orange-900 to-transparent text-white font-semibold text-lg cursor-pointer"
+            className="w-full text-lg cursor-pointer hover:scale-105 transition-transform duration-200"
           >
             <Play className="w-5 h-5 mr-2" />
             Siguiente Turno

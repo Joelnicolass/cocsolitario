@@ -518,13 +518,16 @@ const rootEffectMap: Partial<Record<TechnologicalRootType, BuildingType>> = {
   [TechnologicalRootType.CIENCE]: BuildingType.OBSERVATORY,
 };
 
-const pickTech = (tech: {
-  name: string;
-  description: string;
-  root: TechnologicalRootType;
-  place: number;
-  effect?: string;
-}) => {
+const pickTech = (
+  tech: {
+    name: string;
+    description: string;
+    root: TechnologicalRootType;
+    place: number;
+    effect?: string;
+  },
+  advanceGovernment: boolean = false
+) => {
   return {
     name: tech.name,
     description: tech.description,
@@ -532,6 +535,7 @@ const pickTech = (tech: {
     place: tech.place,
     effect: tech.effect || "",
     effectCategory: rootEffectMap[tech.root] || null,
+    advanceGovernment,
   };
 };
 
@@ -573,21 +577,10 @@ export const rollForTechnology = (
   if (!nextTech) return null;
 
   // comprobar si se han llenado los 4 lugares de la tech actual
-  /* if (unlockedRootPlaces.length >= 3) {
-    // AVANZAR TECH DE GOBIERNO
-
-    // buscar si alguna tecnologia de gobierno ya se ha desbloqueado
-    const governmentTechs = [
-      TechnologicalRootType.DEMOCRACY,
-      TechnologicalRootType.AUTOCRACY,
-      TechnologicalRootType.TEOCRACY,
-    ];
-
-    const unlockedGovernmentTechs = governmentTechs.filter((tech) =>
-      unlockedRootPlaces[tech] ? true : false
-    );
+  if (unlockedRootPlaces.length >= 3) {
+    return pickTech(nextTech, true);
   }
- */
+
   return pickTech(nextTech);
 
   //return nextTech ? pickTech(nextTech) : null;
