@@ -1,103 +1,358 @@
-import Image from "next/image";
+"use client";
+
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useAdvanceTech } from "@/hooks/use_advance_tech";
+import { useEvent } from "@/hooks/use_event";
+import { useRecruit } from "@/hooks/use_recruit";
+import { useTracks } from "@/hooks/use_tracks";
+import { useTurn } from "@/hooks/use_turn";
+import {
+  BuildingType,
+  IBOActions,
+  ResourceType,
+  rollForTechnology,
+} from "@/utils/game_utilities";
+import { ReactNode, useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
+import LiquidGlass from "liquid-glass-react";
+
+const BORDER_RADIUS = "8px";
+const PADDING = "16px";
+const GAP = "8px";
+enum ICON_SIZES {
+  XSMALL = "8px",
+  SMALL = "16px",
+  MEDIUM = "24px",
+  LARGE = "32px",
+  XLARGE = "48px",
+}
+
+const IMAGE_RESOURCES = {
+  [ResourceType.FOOD]: "/icon_food.png",
+  [ResourceType.WOOD]: "/icon_wood.png",
+  [ResourceType.STONE]: "/icon_stone.png",
+  [ResourceType.SCIENCE]: "/icon_science.png",
+  [ResourceType.GOLD]: "/icon_gold.png",
+};
+
+export const Card = ({
+  children,
+  ...props
+}: {
+  children?: React.ReactNode;
+} & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      {...props}
+      style={{
+        position: "relative",
+        width: "100%",
+        padding: PADDING,
+        borderRadius: BORDER_RADIUS,
+        backgroundColor: "#ffffff2c",
+        WebkitBackdropFilter: "blur(10px)",
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255, 255, 255, 0.202)",
+        ...props.style,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          borderRadius: BORDER_RADIUS,
+          background:
+            "radial-gradient(circle, rgba(223, 223, 223, 0.083) 70%, rgba(255, 255, 255, 0.335) 100%)",
+          zIndex: -1,
+          pointerEvents: "none",
+        }}
+      />
+      {children}
+    </div>
+  );
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { unlockedTechs, techCompleteGraph, unlockTech } = useAdvanceTech();
+  const {
+    addBuildingToTrack,
+    buildStructure,
+    track,
+    trackSettlement,
+    buildingsFinished,
+  } = useTracks();
+  const { recruit } = useRecruit(trackSettlement, buildingsFinished);
+  const { nextTurn, currentTurn } = useTurn();
+  const { decreaseTrackEvent, trackEvent } = useEvent();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [turnText, setTurnText] = useState<ReactNode>(null);
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+      }}
+    >
+      <main
+        style={{
+          position: "relative",
+          top: 0,
+          left: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: PADDING,
+          gap: GAP,
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0,
+            backgroundImage: "url('/bg.webp')",
+            filter: "blur(8px)",
+          }}
+        />
+        <Card>
+          <Button
+            style={{ width: "100%" }}
+            onClick={() => {
+              const action = nextTurn();
+
+              switch (action) {
+                case IBOActions.ADVANCE: {
+                  const tech = rollForTechnology(unlockedTechs);
+                  if (tech) {
+                    unlockTech(tech);
+                    decreaseTrackEvent();
+
+                    if (tech.effectCategory) {
+                      try {
+                        addBuildingToTrack(tech.effectCategory);
+                      } catch (error) {
+                        console.log("Error adding building to track:", error);
+                      }
+                    }
+
+                    setTurnText(
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span>
+                          Voy a investigar esta tecnología:{" "}
+                          <strong>{tech.category}</strong> -{" "}
+                          <strong>{tech.name}</strong>
+                        </span>
+                        <br />
+                        <span>Descripción: {tech.description}</span>
+                      </div>
+                    );
+                  }
+                  break;
+                }
+
+                case IBOActions.BUILD: {
+                  const { building, place } = buildStructure();
+                  setTurnText(
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span>
+                        Voy a construir una estructura:{" "}
+                        <strong>{building}</strong>.{" "}
+                        {building !== BuildingType.SETTLEMENT && (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: GAP,
+                            }}
+                          >
+                            En el lugar:
+                            <Avatar>
+                              <AvatarImage
+                                src={IMAGE_RESOURCES[place as ResourceType]}
+                                alt={place}
+                                style={{ scale: "1.1" }}
+                              />
+                            </Avatar>
+                          </span>
+                        )}
+                      </span>
+                      {building === BuildingType.SETTLEMENT && (
+                        <span>Construí una nueva ciudad.</span>
+                      )}
+                    </div>
+                  );
+                  break;
+                }
+
+                case IBOActions.INFLUENCE: {
+                  setTurnText(
+                    `Voy a intentar influenciar culturalmente la ciudad más cercana a mí.`
+                  );
+                  break;
+                }
+
+                case IBOActions.RECRUIT: {
+                  const result = recruit();
+                  setTurnText(
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: GAP,
+                      }}
+                    >
+                      <span>
+                        Voy a reclutar algunas unidades en mis ciudades:
+                      </span>
+                      <div>
+                        {Object.entries(result).map(([resource, unit]) => (
+                          <div
+                            key={resource}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: GAP,
+                              marginBottom: "4px",
+                            }}
+                          >
+                            <Avatar>
+                              <AvatarImage
+                                src={IMAGE_RESOURCES[resource as ResourceType]}
+                                alt={resource}
+                                style={{ scale: "1.1" }}
+                              />
+                            </Avatar>
+                            <span style={{ marginLeft: "4px" }}>{unit}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                  break;
+                }
+
+                case IBOActions.ATACK: {
+                  setTurnText(
+                    <>
+                      <span>
+                        Voy a moverme a una nueva ubicación, en dirección hacia
+                        la ciduad enemiga más cercana. Si esta a mi alcance,
+                        intentaré atacarla.
+                      </span>
+                    </>
+                  );
+                  break;
+                }
+              }
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Siguiente turno
+          </Button>
+        </Card>
+
+        <Card>{turnText}</Card>
+
+        <Card
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: GAP,
+          }}
+        >
+          <span>Ciudades construídas</span>
+          <div style={{ display: "flex", gap: GAP }}>
+            {Object.entries(trackSettlement)
+              .filter((e) => e[1])
+              .map((e) => (
+                <div key={e[0]}>
+                  <Avatar>
+                    <AvatarImage
+                      src={IMAGE_RESOURCES[e[0] as ResourceType]}
+                      alt={e[0]}
+                      style={{ scale: "1.1" }}
+                    />
+                  </Avatar>
+                </div>
+              ))}
+          </div>
+        </Card>
+
+        <Card
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: GAP,
+            width: "100%",
+          }}
+        >
+          <span>Edificaciones desbloqueadas</span>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: GAP,
+            }}
           >
-            Read our docs
-          </a>
+            {Object.entries(track)
+              .filter(([, name]) => name)
+              .map(([, name], i) => (
+                <Badge key={`name-${i}`} className="rounded-full">
+                  {name}
+                </Badge>
+              ))}
+          </div>
+        </Card>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: GAP,
+          }}
+        >
+          <Card>Tecnologías desbloqueadas</Card>
+          {Object.entries(techCompleteGraph).map(([category, values]) => (
+            <Card
+              key={category}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: GAP,
+                padding: PADDING,
+                borderRadius: BORDER_RADIUS,
+                width: "auto",
+                minWidth: "100px",
+                height: "180px",
+              }}
+            >
+              <span>{category}</span>
+              {values.map((tech) => (
+                <Badge key={tech.name} className="rounded-full">
+                  {tech.name}
+                </Badge>
+              ))}
+            </Card>
+          ))}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
