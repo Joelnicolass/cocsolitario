@@ -729,7 +729,13 @@ function determineUnitType(
 }
 
 export const recruitUnit = (
-  trackSettlement: Record<string, boolean>,
+  trackSettlement: Record<
+    string,
+    {
+      active: boolean;
+      isDestroyed: boolean;
+    }
+  >,
   canRecruitAdvancedUnities: boolean,
   canRecruitShip: boolean,
   hasLeader: boolean,
@@ -737,7 +743,7 @@ export const recruitUnit = (
 ) => {
   const result: Record<string, string> = {};
 
-  Object.entries(trackSettlement).forEach(([resource, built]) => {
+  Object.entries(trackSettlement).forEach(([resource, { active: built }]) => {
     if (!built) return;
     const dice = rollDice(6);
     const { type, effect } = determineUnitType(

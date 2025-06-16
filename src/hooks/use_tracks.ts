@@ -10,14 +10,36 @@ import { useState } from "react";
 
 export const useTracks = () => {
   const [track, setTrack] = useState<TrackBuilding>(initTrackBuilding);
+  const [counterBuilding, setCounterBuilding] = useState<number>(1);
   const [trackSettlement, setTrackSettlement] = useState<
-    Record<ResourceType, boolean>
+    Record<
+      ResourceType,
+      {
+        active: boolean;
+        isDestroyed: boolean;
+      }
+    >
   >({
-    [ResourceType.FOOD]: true,
-    [ResourceType.WOOD]: false,
-    [ResourceType.STONE]: false,
-    [ResourceType.GOLD]: false,
-    [ResourceType.SCIENCE]: false,
+    [ResourceType.FOOD]: {
+      active: true,
+      isDestroyed: false,
+    },
+    [ResourceType.WOOD]: {
+      active: false,
+      isDestroyed: false,
+    },
+    [ResourceType.STONE]: {
+      active: false,
+      isDestroyed: false,
+    },
+    [ResourceType.GOLD]: {
+      active: false,
+      isDestroyed: false,
+    },
+    [ResourceType.SCIENCE]: {
+      active: false,
+      isDestroyed: false,
+    },
   });
 
   const [buildingsFinished, setBuildingsFinished] = useState<
@@ -31,6 +53,10 @@ export const useTracks = () => {
     [BuildingType.OBELISK]: false,
     [BuildingType.OBSERVATORY]: false,
   });
+
+  const [buildingsFinishedNames, setBuildingsFinishedNames] = useState<
+    Array<BuildingType>
+  >([BuildingType.SETTLEMENT]);
 
   const [trackModifiers, setTrackModifiers] = useState<
     Record<
@@ -91,13 +117,18 @@ export const useTracks = () => {
 
     if (building === BuildingType.SETTLEMENT) {
       const nextResource = Object.keys(trackSettlement).find(
-        (key) => !trackSettlement[key as ResourceType]
+        (key) =>
+          !trackSettlement[key as ResourceType].active &&
+          !trackSettlement[key as ResourceType].isDestroyed
       ) as ResourceType;
 
       if (nextResource) {
         setTrackSettlement((prev) => ({
           ...prev,
-          [nextResource]: true,
+          [nextResource]: {
+            active: true,
+            isDestroyed: false,
+          },
         }));
       }
     }
@@ -115,6 +146,11 @@ export const useTracks = () => {
     }
 
     setTrack(newTrack);
+    setCounterBuilding((prev) => prev + 1);
+
+    if (building) {
+      setBuildingsFinishedNames((prev) => [...prev, building]);
+    }
 
     const buildingPlace = Object.keys(trackSettlement).filter(
       (key) => trackSettlement[key as ResourceType]
@@ -130,12 +166,27 @@ export const useTracks = () => {
     };
   };
 
+  const destroySettlement = (resource: ResourceType) => {
+    setTrackSettlement((prev) => ({
+      ...prev,
+      [resource]: {
+        ...prev[resource],
+        isDestroyed: true,
+      },
+    }));
+
+    setCounterBuilding((prev) => prev - 1);
+  };
+
   return {
     track,
     trackModifiers,
     trackSettlement,
     buildingsFinished,
+    counterBuilding,
+    buildingsFinishedNames,
     buildStructure,
+    destroySettlement,
     addBuildingToTrack,
   };
 };
